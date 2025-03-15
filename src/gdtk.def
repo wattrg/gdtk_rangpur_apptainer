@@ -1,0 +1,79 @@
+BootStrap: docker
+From: ubuntu:22.04
+
+%setup
+	mkdir -p ${APPTAINER_ROOTFS}/usr/lib64/openmpi
+	mkdir -p ${APPTAINER_ROOTFS}/usr/host/lib
+	mkdir -p ${APPTAINER_ROOTFS}/usr/host/all
+	mkdir -p ${APPTAINER_ROOTFS}/usr/host/include/openmpi-x86_64
+
+%files
+	src/update /opt
+	src/compile-install /opt
+
+%post
+	# Set timezone so the build process doesn't freeze asking for the timezone
+	TZ=Europe/Brisbane
+   	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+	export DEBIAN_FRONTEND=noninteractive
+
+	# Install packages
+	apt update
+	#apt -y upgrade
+	apt -y install wget xz-utils make build-essential libxml2 gfortran gfortran-multilib \
+                       git libreadline-dev libncurses5-dev python3-cffi ruby tcl \
+                       libplot-dev python3-pip python-is-python3 metis
+
+	# apt -y install gfortran gfortran-multilib git libreadline-dev libncurses5-dev python3-cffi
+	# apt -y install ruby tcl libplot-dev pip python-is-python3 metis
+	# apt -y install libopenmpi-dev
+
+	# Required python packages
+	pip install sympy
+
+	# ldc2
+	cd opt
+	wget https://github.com/ldc-developers/ldc/releases/download/v1.40.0/ldc2-1.40.0-linux-x86_64.tar.xz
+	tar -Jxvf ldc2-1.40.0-linux-x86_64.tar.xz
+	rm ldc2-1.40.0-linux-x86_64.tar.xz
+
+	# Add ldc2 to path for compiling during the initial build
+	export PATH=$PATH:/opt/ldc2-1.40.0-linux-x86_64/bin
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ldc2-1.40.0-linux-x86_64/lib
+
+	# Make the scripts executable
+	chmod +x /opt/update /opt/compile-install
+
+	# Some symlinks to libraries mpicc relies on
+	ln -s /usr/host/all/libhwloc.so.15 /usr/host/lib/libhwloc.so.15
+	ln -s /usr/host/all/libevent_core-2.1.so.6 /usr/host/lib/libevent_core-2.1.so.6
+	ln -s /usr/host/all/libevent_pthreads-2.1.so.6 /usr/host/lib/libevent_pthreads-2.1.so.6
+	ln -s /usr/host/all/libcrypto.so.1.1 /usr/host/lib/libcrypto.so.1.1
+	ln -s /usr/host/all/libpmix.so.2 /usr/host/lib/libpmix.so.2
+	ln -s /usr/host/all/libevent-2.1.so.6 /usr/host/lib/libevent-2.1.so.6
+	export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/host/include/openmpi-x86_64
+
+	# Build lmr
+	git clone https://github.com/gdtk-uq/gdtk.git
+	export PATH=$PATH:/usr/lib64/openmpi/bin
+	export PATH=$PATH:/opt
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/host/lib
+	compile-install
+
+
+%environment
+	export DGD=/opt/gdtkinst
+	export DGD_REPO=/opt/gdtk
+	export PATH=$PATH:/opt/ldc2-1.40.0-linux-x86_64/bin:$DGD/bin:/opt
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ldc2-1.40.0-linux-x86_64/lib:$DGD/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/host/lib
+	export PATH=$PATH:/usr/lib64/openmpi/bin
+	export DGD_LUA_PATH=$DGD/lib/?.lua
+	export DGD_LUA_CPATH=$DGD/lib/?.so
+	export PYTHONPATH=${PYTHONPATH}:${DGD}/lib
+	export RUBYPATH=${RUBYPATH}:${DGD}/lib
+	export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${DGD}/lib
+	export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/host/include/openmpi-x86_64
+

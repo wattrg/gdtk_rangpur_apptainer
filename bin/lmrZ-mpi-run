@@ -1,0 +1,2 @@
+#! /bin/bash
+apptainer exec --bind $MPI_INCLUDE:/usr/host/include/openmpi-x86_64 --bind $MPI_HOME:/usr/lib64/openmpi --bind /usr/lib64:/usr/host/all --overlay $LMR_CONTAINER/overlay $LMR_CONTAINER/gdtk_ldc-1.40.0.sif lmrZ-mpi-run $*

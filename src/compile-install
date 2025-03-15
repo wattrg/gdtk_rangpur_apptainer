@@ -1,0 +1,9 @@
+#! /bin/bash
+
+cd /opt/gdtk/src/lmr
+make clean
+make FLAVOUR=fast WITH_CHECK_JAC=1 INSTALL_DIR=/opt/gdtkinst install
+
+cd /opt/gdtk/src/gas
+make clean
+make FLAVOUR=fast INSTALL_DIR=/opt/gdtkinst install
