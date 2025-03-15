@@ -1,7 +1,7 @@
 BUILD_DIR := build
 
 .PHONY:
-build: $(BUILD_DIR)/gdtk_ldc-1.40.0.sif $(BUILD_DIR)/overlay $(BUILD_DIR)/bin
+build: $(BUILD_DIR)/gdtk_ldc-1.40.0.sif $(BUILD_DIR)/overlay $(BUILD_DIR)/bin $(BUILD_DIR)/share
 
 $(BUILD_DIR)/gdtk_ldc-1.40.0.sif: src/gdtk.def src/update src/compile-install
 	mkdir -p $(BUILD_DIR)
@@ -12,6 +12,9 @@ $(BUILD_DIR)/overlay:
 
 $(BUILD_DIR)/bin:
 	cp -r bin $(BUILD_DIR)
+
+$(BUILD_DIR)/share:
+	cp -r share $(BUILD_DIR)
 
 .PHONY:
 clean:

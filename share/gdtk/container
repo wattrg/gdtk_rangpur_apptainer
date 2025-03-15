@@ -1,0 +1,12 @@
+#%Module
+
+
+proc ModulesHelp { } {
+    puts stderr "LMR container"
+}
+
+module-whatis "LMR container"
+
+set LMR_CONTAINER "~/gdtk_apptainer/build"
+setenv LMR_CONTAINER "$LMR_CONTAINER"
+prepend-path PATH "$LMR_CONTAINER/bin"
